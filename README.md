@@ -172,7 +172,3 @@ NetWatch uses browser LocalStorage for data persistence:
 - Firefox
 - Safari
 - Edge
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
