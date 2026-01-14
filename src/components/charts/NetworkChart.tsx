@@ -1,18 +1,16 @@
 "use client";
 
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   Legend,
 } from "recharts";
 import { NetworkMetric } from "@/types/metric";
 import { formatBytes } from "@/lib/utils";
-import { CHART_COLORS } from "@/lib/constants";
 
 interface NetworkChartProps {
   data: NetworkMetric[];
@@ -25,39 +23,41 @@ export function NetworkChart({
   height = 300,
   showLegend = true,
 }: NetworkChartProps) {
-  // Transform data to cumulative values (like stocks)
-  let cumulativeUpload = 0;
-  let cumulativeDownload = 0;
-
-  const chartData = data.map((metric) => {
-    cumulativeUpload += metric.uploadSpeed;
-    cumulativeDownload += metric.downloadSpeed;
-
-    return {
-      time: new Date(metric.timestamp).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }),
-      upload: cumulativeUpload,
-      download: cumulativeDownload,
-    };
-  });
+  const chartData = data.map((metric) => ({
+    time: new Date(metric.timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }),
+    upload: metric.uploadSpeed,
+    download: metric.downloadSpeed,
+  }));
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
+      <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+        <defs>
+          <linearGradient id="uploadGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
+          </linearGradient>
+          <linearGradient id="downloadGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#22c55e" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="#22c55e" stopOpacity={0.05} />
+          </linearGradient>
+        </defs>
         <XAxis
           dataKey="time"
-          tick={{ fontSize: 10 }}
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 10, fill: "#6b7280" }}
           interval="preserveStartEnd"
-          className="text-muted-foreground"
         />
         <YAxis
-          tick={{ fontSize: 10 }}
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 10, fill: "#6b7280" }}
           tickFormatter={(value) => formatBytes(value)}
-          className="text-muted-foreground"
           width={60}
         />
         <Tooltip
@@ -66,28 +66,28 @@ export function NetworkChart({
             border: "1px solid hsl(var(--border))",
             borderRadius: "var(--radius)",
           }}
-          formatter={(value: number) => [formatBytes(value), ""]}
+          formatter={(value: number) => [formatBytes(value) + "/s", ""]}
         />
         {showLegend && <Legend />}
-        <Line
-          type="linear"
+        <Area
+          type="monotone"
           dataKey="upload"
           name="Upload"
-          stroke={CHART_COLORS.primary}
+          stroke="#3b82f6"
+          fill="url(#uploadGradient)"
           strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 4 }}
+          isAnimationActive={false}
         />
-        <Line
-          type="linear"
+        <Area
+          type="monotone"
           dataKey="download"
           name="Download"
-          stroke={CHART_COLORS.success}
+          stroke="#22c55e"
+          fill="url(#downloadGradient)"
           strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 4 }}
+          isAnimationActive={false}
         />
-      </LineChart>
+      </AreaChart>
     </ResponsiveContainer>
   );
 }
